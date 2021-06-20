@@ -1804,9 +1804,17 @@ interface IClockAuction {
     function createAuction(uint256 _tokenId, uint256 _startingPrice, uint256 _endingPrice, uint256 _duration, address _seller) external;
 }
 
-contract PlantCore is ERC721Pausable, AccessControl, Ownable {
+interface IPlantCore {
+    function createPlantFromFarm(address _owner) external;
+}
+
+contract PlantCore is ERC721Pausable, AccessControl, Ownable, IPlantCore {
+    
+    event MintFeeAddressTransferred(address indexed previousOwner, address indexed newOwner);
+
     bytes32 public constant PAUSED_ROLE = keccak256('PAUSED_ROLE');
     uint256 public nextTokenId = 1;
+    address public farmAddr;
     
     address public saleAuctionAddr;
     // Counts the number of Plants the contract owner has created.
@@ -1815,7 +1823,6 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable {
     
     uint256 private nonce = 0;
     uint256[] private rangeOfId;
-    event MintFeeAddressTransferred(address indexed previousOwner, address indexed newOwner);
 
     constructor(
         string memory name,
@@ -1823,6 +1830,11 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable {
     ) public ERC721(name, symbol) {
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _setupRole(PAUSED_ROLE, _msgSender());
+    }
+    
+    modifier onlyFarm() {
+        require(msg.sender == farmAddr, "NOT_THE_FARM");
+        _;
     }
     
     function getRangeIdLength() external view returns(uint256){
@@ -1858,6 +1870,19 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable {
         nextTokenId++;
     }
     
+    function createPlantFromFarm(address _owner) override external onlyFarm {
+        require(rangeOfId.length > 0, "INSUFFFICIENT PLANT ID");
+
+        uint256 tokenId = nextTokenId;
+        uint256 index = _randomPlantplantId();
+        uint256 plantId = rangeOfId[index];
+
+        _mintPlant(_owner, tokenId, plantId);
+        _remove(index);
+
+        nextTokenId++;
+    }
+    
     function createSaleAuction(
         uint256 _tokenId,
         uint256 _startingPrice,
@@ -1867,7 +1892,7 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable {
         external
         whenNotPaused
     {
-        require(ownerOf(_tokenId) == msg.sender, "Not tokenId owner");
+        require(msg.sender == ownerOf(_tokenId), "Not tokenId owner");
 
         _approve(saleAuctionAddr, _tokenId);
         IClockAuction(saleAuctionAddr).createAuction(
@@ -1883,6 +1908,12 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable {
     /// @param _address - Address of sale contract.
     function setSaleAuctionAddress(address _address) external onlyOwner {
         saleAuctionAddr = _address;
+    }
+    
+    // @dev Sets the reference to the farm.  
+    /// @param _address - Address of farm contract.
+    function setFarmAddress(address _address) external onlyOwner {
+        farmAddr = _address;
     }
     
     /// @notice Returns all the relevant information about a specific Plant.
