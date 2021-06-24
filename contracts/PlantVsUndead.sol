@@ -1817,9 +1817,10 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable, IPlantCore {
     address public farmAddr;
     
     address public saleAuctionAddr;
-    // Counts the number of Plants the contract owner has created.
     uint256 public price = 1* 10**18;
     address public PVUToken = 0x764DcC7F507857A603629fc7EBDCA6A93452c739;
+    bool public isBurn;
+    uint256 public rate;
     
     uint256 private nonce = 0;
     uint256[] private rangeOfId;
@@ -1830,6 +1831,8 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable, IPlantCore {
     ) public ERC721(name, symbol) {
         _setupRole(DEFAULT_ADMIN_ROLE, _msgSender());
         _setupRole(PAUSED_ROLE, _msgSender());
+        isBurn = false;
+        rate = 30;
     }
     
     modifier onlyFarm() {
@@ -1904,6 +1907,16 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable, IPlantCore {
         );
     }
     
+    function burnPlant(uint256 _tokenId) external {
+        require(isBurn == true, "Burning is not allowed");
+        require(msg.sender == ownerOf(_tokenId), "Not tokenId owner");
+
+        _burn(_tokenId); // burn token
+        
+        uint256 amount = price.mul(rate).div(100);
+        IERC20(PVUToken).transfer(msg.sender, amount);
+    }
+    
     // @dev Sets the reference to the sale auction.
     /// @param _address - Address of sale contract.
     function setSaleAuctionAddress(address _address) external onlyOwner {
@@ -1914,6 +1927,16 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable, IPlantCore {
     /// @param _address - Address of farm contract.
     function setFarmAddress(address _address) external onlyOwner {
         farmAddr = _address;
+    }
+    
+    // @dev Sets the reference to the burn.  
+    function setIsBurn() external onlyOwner {
+        isBurn = true;
+    }
+    
+    // @dev Sets the reference to the rate.  
+    function setRate(uint256 _rate) external onlyOwner {
+        rate = _rate;
     }
     
     /// @notice Returns all the relevant information about a specific Plant.
