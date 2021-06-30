@@ -1850,7 +1850,7 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable, IPlantCore {
     
     function addPlantId(uint256[] calldata _plantId) external onlyOwner {
         for(uint i=0; i<_plantId.length; i++) {
-            rangeOfId.push(i);
+            rangeOfId.push(_plantId[i]);
         }
     }
     
