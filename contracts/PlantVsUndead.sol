@@ -1806,6 +1806,7 @@ interface IClockAuction {
 
 interface IPlantCore {
     function createPlantFromFarm(address _owner) external;
+    function createBundlePlant(address _owner, uint256 _numberPlant) external;
 }
 
 contract PlantCore is ERC721Pausable, AccessControl, Ownable, IPlantCore {
@@ -1879,7 +1880,7 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable, IPlantCore {
         nextTokenId++;
     }
     
-    function createBundlePlant(address _owner, uint256 _numberPlant) external onlyBundle {
+    function createBundlePlant(address _owner, uint256 _numberPlant) external override onlyBundle {
         for(uint i=0; i<_numberPlant; i++){
             uint256 tokenId = nextTokenId;
             uint256 index = _randomPlantplantId();
