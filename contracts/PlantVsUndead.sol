@@ -1826,6 +1826,7 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable, IPlantCore {
     
     uint256 private nonce = 0;
     uint256[] private rangeOfId;
+    uint256[] private seedFarm;
 
     constructor(
         string memory name,
@@ -1855,9 +1856,23 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable, IPlantCore {
         return rangeOfId;
     }
     
+    function getSeedFarmLength() external view returns(uint256){
+        return seedFarm.length;
+    }
+    
+    function getSeedFarm() external view returns(uint256[] memory) {
+        return seedFarm;
+    }
+    
     function addPlantId(uint256[] calldata _plantId) external onlyOwner {
         for(uint i=0; i<_plantId.length; i++) {
             rangeOfId.push(_plantId[i]);
+        }
+    }
+    
+    function addSeedFarm(uint256[] calldata _seedId) external onlyOwner {
+        for(uint i=0; i<_seedId.length; i++) {
+            seedFarm.push(_seedId[i]);
         }
     }
     
@@ -1871,7 +1886,7 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable, IPlantCore {
         require(IERC20(PVUToken).transferFrom(msg.sender, address(this), _amount));
         
         uint256 tokenId = nextTokenId;
-        uint256 index = _randomPlantplantId();
+        uint256 index = _randomPlantId();
         uint256 plantId = rangeOfId[index];
 
         _mintPlant(_owner, tokenId, plantId);
@@ -1883,7 +1898,7 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable, IPlantCore {
     function createBundlePlant(address _owner, uint256 _numberPlant) external override onlyBundle {
         for(uint i=0; i<_numberPlant; i++){
             uint256 tokenId = nextTokenId;
-            uint256 index = _randomPlantplantId();
+            uint256 index = _randomPlantId();
             uint256 plantId = rangeOfId[index];
     
             _mintPlant(_owner, tokenId, plantId);
@@ -1897,11 +1912,11 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable, IPlantCore {
         require(rangeOfId.length > 0, "INSUFFFICIENT PLANT ID");
 
         uint256 tokenId = nextTokenId;
-        uint256 index = _randomPlantplantId();
-        uint256 plantId = rangeOfId[index];
+        uint256 index = _randomSeedFarm();
+        uint256 seedId = seedFarm[index];
 
-        _mintPlant(_owner, tokenId, plantId);
-        _remove(index);
+        _mintPlant(_owner, tokenId, seedId);
+        _removeSeedFarm(index);
 
         nextTokenId++;
     }
@@ -1980,7 +1995,7 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable, IPlantCore {
         plantId = plant.plantId;
     }
     
-    function _randomPlantplantId() internal returns (uint256) {
+    function _randomPlantId() internal returns (uint256) {
         uint256 randomN = uint256(blockhash(block.number));
         uint256 index = uint256(keccak256(abi.encodePacked(randomN, block.timestamp, nonce))) % (rangeOfId.length);
         nonce++;
@@ -1994,6 +2009,22 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable, IPlantCore {
         rangeOfId[_index] = rangeOfId[rangeOfId.length-1];
         rangeOfId.pop();
     }
+    
+    function _randomSeedFarm() internal returns (uint256) {
+        uint256 randomN = uint256(blockhash(block.number));
+        uint256 index = uint256(keccak256(abi.encodePacked(randomN, block.timestamp, nonce))) % (seedFarm.length);
+        nonce++;
+        
+        return index;
+    }
+    
+    function _removeSeedFarm(uint _index) private {
+        if (_index >= seedFarm.length) return;
+        
+        seedFarm[_index] = seedFarm[seedFarm.length-1];
+        seedFarm.pop();
+    } 
+    
     
     function getBalance() public view returns(uint256) {
         return IERC20(PVUToken).balanceOf(address(this));
@@ -2013,7 +2044,6 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable, IPlantCore {
         _unpause();
     }
 }
-
 
 
 
