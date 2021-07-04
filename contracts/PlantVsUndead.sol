@@ -1815,6 +1815,7 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable, IPlantCore {
     bytes32 public constant PAUSED_ROLE = keccak256('PAUSED_ROLE');
     uint256 public nextTokenId = 1;
     address public farmAddr;
+    address public bundleAddr;
     
     address public saleAuctionAddr;
     uint256 public price = 1* 10**18;
@@ -1837,6 +1838,11 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable, IPlantCore {
     
     modifier onlyFarm() {
         require(msg.sender == farmAddr, "NOT_THE_FARM");
+        _;
+    }
+    
+    modifier onlyBundle() {
+        require(msg.sender == bundleAddr, "NOT_THE_BUNDLE");
         _;
     }
     
@@ -1871,6 +1877,19 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable, IPlantCore {
         _remove(index);
 
         nextTokenId++;
+    }
+    
+    function createBundlePlant(address _owner, uint256 _numberPlant) external onlyBundle {
+        for(uint i=0; i<_numberPlant; i++){
+            uint256 tokenId = nextTokenId;
+            uint256 index = _randomPlantplantId();
+            uint256 plantId = rangeOfId[index];
+    
+            _mintPlant(_owner, tokenId, plantId);
+            _remove(index);
+    
+            nextTokenId++;
+        }
     }
     
     function createPlantFromFarm(address _owner) override external onlyFarm {
@@ -1927,6 +1946,12 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable, IPlantCore {
     /// @param _address - Address of farm contract.
     function setFarmAddress(address _address) external onlyOwner {
         farmAddr = _address;
+    }
+    
+    // @dev Sets the reference to the bundle.  
+    /// @param _address - Address of bundle contract.
+    function setBundleAddress(address _address) external onlyOwner {
+        bundleAddr = _address;
     }
     
     // @dev Sets the reference to the burn.  
