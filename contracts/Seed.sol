@@ -1353,6 +1353,22 @@ contract ERC721 is Context, ERC165, IERC721, IERC721Enumerable {
         // _tokenOwners are indexed by tokenIds, so .length() returns the number of tokenIds
         return _tokenOwners.length();
     }
+    
+    /**
+    * @dev See {IERC721Enumerable-name}.
+     */
+    function name() public view  returns (string memory) {
+        return _name;
+    
+    }
+    
+    /**
+    * @dev See {IERC721Enumerable-symbol}.
+     */
+    function symbol() public view  returns (string memory) {
+        return _symbol;
+    
+    }
 
     /**
      * @dev See {IERC721Enumerable-tokenByIndex}.
