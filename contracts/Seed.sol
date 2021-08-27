@@ -1836,9 +1836,11 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable, IPlantCore {
     
     address public saleAuctionAddr;
     uint256 public price = 1* 10**18;
-    address public PVUToken = 0x764DcC7F507857A603629fc7EBDCA6A93452c739;
+    address public PVUToken = 0x3cDB2E77233e4b72CBC8E7872C445b23d19aF46a;
+    address public swapAddress;
     bool public isBurn;
     uint256 public rate;
+    
     
     uint256 private nonce = 0;
     uint256[] private rangeOfId;
@@ -1861,6 +1863,11 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable, IPlantCore {
     
     modifier onlyBundle() {
         require(msg.sender == bundleAddr, "NOT_THE_BUNDLE");
+        _;
+    }
+    
+    modifier onlySwap() {
+        require(msg.sender == swapAddress, "NOT_THE_SWAP");
         _;
     }
     
@@ -1925,7 +1932,7 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable, IPlantCore {
     }
     
     function createPlantFromFarm(address _owner) override external onlyFarm {
-        require(rangeOfId.length > 0, "INSUFFFICIENT PLANT ID");
+        require(seedFarm.length > 0, "INSUFFFICIENT PLANT ID");
 
         uint256 tokenId = nextTokenId;
         uint256 index = _randomSeedFarm();
@@ -1933,6 +1940,14 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable, IPlantCore {
 
         _mintPlant(_owner, tokenId, seedId);
         _removeSeedFarm(index);
+
+        nextTokenId++;
+    }
+    
+    function mintPlantFromSwap(address _owner, uint256 _plantId) external onlySwap {
+        uint256 tokenId = nextTokenId;
+
+        _mintPlant(_owner, tokenId, _plantId);
 
         nextTokenId++;
     }
@@ -1994,6 +2009,10 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable, IPlantCore {
     // @dev Sets the reference to the rate.  
     function setRate(uint256 _rate) external onlyOwner {
         rate = _rate;
+    }
+    
+    function setSwapAddress(address _swapAddress) external onlyOwner {
+        swapAddress = _swapAddress;
     }
     
     /// @notice Returns all the relevant information about a specific Plant.
@@ -2060,7 +2079,6 @@ contract PlantCore is ERC721Pausable, AccessControl, Ownable, IPlantCore {
         _unpause();
     }
 }
-
 
 
 
